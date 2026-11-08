@@ -1,0 +1,3 @@
+- insert:
+    - id: dsh-board
+      name: '@local/dsh-board'
