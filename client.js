@@ -371,7 +371,14 @@ window.__ModuleLoader__.load({
 
     const CSS = [
       '.dshboard-shell{display:flex;flex-direction:column;height:100%;min-height:0;box-sizing:border-box;padding:16px 20px 14px;gap:12px;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-size:13px}',
-      '.dshboard-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:30px}',
+      // macOS draws its window buttons (close/minimize/zoom) inside the content
+      // area because the title bar is hiddenInset, and a main panel starts at the
+      // window's top-left corner whenever the sidebar is collapsed or drawn over
+      // the content. The shell publishes --dsh-frame-leading-clearance for exactly
+      // that case (the inline band its window-chrome seat occupies, measured from
+      // the frame edge), so the board header starts past the buttons instead of
+      // covering them. Shell left padding here is 20px, hence the subtraction.
+      '.dshboard-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:30px;padding-inline-start:max(0px,calc(var(--dsh-frame-leading-clearance,0px) - 20px))}',
       '.dshboard-h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}',
       '.dshboard-sub{color:var(--dsw-alias-label-secondary);font-size:12px}',
       '.dshboard-spacer{flex:1}',
@@ -1303,7 +1310,11 @@ window.__ModuleLoader__.load({
      * never a Conversation view.
      */
     const HEADER_BTN_CSS = [
-      '.dshboard-hbtn{position:relative;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}',
+      // This entry point sits in the chat header's leading cell, which begins at
+      // the header's 20px padding. On macOS the collapsed-sidebar window chrome
+      // (the traffic lights and the sidebar seat) owns that corner, so shift the
+      // button past it by the same clearance the chat's own title row uses.
+      '.dshboard-hbtn{position:relative;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;margin-inline-start:max(0px,calc(var(--dsh-frame-leading-clearance,0px) - 20px));border:1px solid var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}',
       '.dshboard-hbtn:hover{border-color:var(--dsw-alias-border-l2)}',
       '.dshboard-hbtn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}',
       '.dshboard-hbtn svg{color:var(--dsw-alias-label-secondary);flex:none}',

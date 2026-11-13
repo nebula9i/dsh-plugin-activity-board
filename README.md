@@ -47,6 +47,7 @@ The sidebar panel row gains an **Activity board** entry once the plugin activate
 - Pinned projects are stored per machine in the browser, not in the session log.
 - The Done column is derived from the last activity time, so a chat you revisit returns to Done rather than Standby.
 - The chat name itself is not clickable; switching chats is done from the dropdown beside it.
+- On macOS the board header starts past the window buttons (close/minimize/zoom), which the hidden title bar draws inside the content area; the same clearance applies to the entry button in a chat header while the sidebar is collapsed.
 
 ## License
 
