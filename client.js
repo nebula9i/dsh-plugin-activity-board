@@ -54,6 +54,7 @@ window.__ModuleLoader__.load({
       createFailed: 'Could not add that project.',
       created: 'Project added',
       openBoard: 'Open the board',
+      closeBoard: 'Close the board and go back to your last chat',
       launchHint: 'The board opens as a full panel so every column has room.',
       compact: 'Compact rows',
       compactHint: 'Put each chat title and its time on one line',
@@ -100,6 +101,7 @@ window.__ModuleLoader__.load({
       createFailed: 'Não foi possível adicionar o projeto.',
       created: 'Projeto adicionado',
       openBoard: 'Abrir o quadro',
+      closeBoard: 'Fechar o quadro e voltar para a sua última conversa',
       launchHint: 'O quadro abre como painel inteiro para cada coluna ter espaço.',
       compact: 'Linhas compactas',
       compactHint: 'Título e horário da conversa na mesma linha',
@@ -388,6 +390,13 @@ window.__ModuleLoader__.load({
       '.dshboard-iconbtn:hover{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l1);color:var(--dsw-alias-label-primary)}',
       '.dshboard-iconbtn[data-on="true"]{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary)}',
       '.dshboard-iconbtn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}',
+      // Round close control at the header's far right. Filled with the error color
+      // so leaving the board reads as its own action, with an outline offset that
+      // keeps the focus ring clear of the neighbouring tools.
+      '.dshboard-close{display:inline-flex;flex:none;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:none;border-radius:999px;background:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary-foreground,var(--dsw-alias-bg-base));cursor:pointer}',
+      '.dshboard-close:hover{filter:brightness(1.08)}',
+      '.dshboard-close:active{filter:brightness(.94)}',
+      '.dshboard-close:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}',
       '.dshboard-btn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}',
       '.dshboard-btn:hover{border-color:var(--dsw-alias-border-l2)}',
       '.dshboard-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}',
@@ -1249,6 +1258,17 @@ window.__ModuleLoader__.load({
           h(IconPlus),
           t('newChat'),
         ),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'dshboard-close',
+            title: t('closeBoard'),
+            'aria-label': t('closeBoard'),
+            onClick: () => props.closeBoard && props.closeBoard(),
+          },
+          h(IconClose),
+        ),
       );
 
       const header = h(
@@ -1909,6 +1929,16 @@ window.__ModuleLoader__.load({
               if (layout && typeof layout.selectPanel === 'function') layout.selectPanel('board');
             } catch (error) {
               console.warn('[dsh-board] openBoard failed', error);
+            }
+          },
+          // Clearing the active panel hands the frame back to the Conversation,
+          // which still holds whichever chat was open before the board.
+          closeBoard: () => {
+            try {
+              const layout = ctx.get('layout');
+              if (layout && typeof layout.selectPanel === 'function') layout.selectPanel(null);
+            } catch (error) {
+              console.warn('[dsh-board] closeBoard failed', error);
             }
           },
         });

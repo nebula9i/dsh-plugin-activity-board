@@ -23,6 +23,7 @@ Chats are grouped under their project inside each column. A project sits in the 
 - **Reorderable columns** by dragging the column header; the order persists.
 - **Search** filters the board by chat title and project name, and the Host's content index adds chats matched only by message text, with the snippet shown inline.
 - **New chat** and **New project** from the board header, plus a per-project `+` to start a chat in that project.
+- **Close** with the round red button at the header's right: it returns to the Conversation with whichever chat was open before the board.
 - **Right-click a card** for the same session menu the sidebar uses: pin, rename, fork, copy ID, archive, open in app.
 - **Activity badge** on the entry button: green when chats finished unseen, yellow when one is waiting on you. It hides while you're on the board.
 - **Command Code quota** in the header when that provider is installed: per-window ring, spend against cap, and when each window resets.
