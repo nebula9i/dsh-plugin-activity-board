@@ -18,6 +18,7 @@ window.__ModuleLoader__.load({
     const PIN_KEY = 'dsh.board.pinnedProjects';
     const ORDER_KEY = 'dsh.board.pinnedOrder';
     const COMPACT_KEY = 'dsh.board.compact';
+    const HIDE_AGENT_KEY = 'dsh.board.hideAgentChats';
     const COLUMN_ORDER_KEY = 'dsh.board.columnOrder';
     const EMPTY = Object.freeze({});
     const EMPTY_MAP = new Map();
@@ -58,6 +59,9 @@ window.__ModuleLoader__.load({
       launchHint: 'The board opens as a full panel so every column has room.',
       compact: 'Compact rows',
       compactHint: 'Put each chat title and its time on one line',
+      autoOrganize: 'Auto-organize',
+      autoOrganizeHint: 'Hide chats that agents and subagents created',
+      hiddenAgents: 'Agent chats hidden: {n}',
       reorderColumn: 'Drag to reorder columns',
       switchProject: 'Switch project',
       switchChat: 'Switch chat',
@@ -105,6 +109,9 @@ window.__ModuleLoader__.load({
       launchHint: 'O quadro abre como painel inteiro para cada coluna ter espaço.',
       compact: 'Linhas compactas',
       compactHint: 'Título e horário da conversa na mesma linha',
+      autoOrganize: 'Organizar automaticamente',
+      autoOrganizeHint: 'Ocultar conversas criadas por agentes e subagentes',
+      hiddenAgents: 'Conversas de agente ocultas: {n}',
       reorderColumn: 'Arraste para reordenar as colunas',
       switchProject: 'Trocar de projeto',
       switchChat: 'Trocar de conversa',
@@ -194,6 +201,18 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /** Like {@link readFlag}, but an unset key means the fallback instead of `false`. */
+    function readFlagDefault(key, fallback) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (raw === '1') return true;
+        if (raw === '0') return false;
+        return fallback;
+      } catch (_error) {
+        return fallback;
+      }
+    }
+
     function hueFor(key) {
       let hash = 0;
       const text = String(key || '');
@@ -260,7 +279,7 @@ window.__ModuleLoader__.load({
     }
 
     function buildModel(input) {
-      const { byId, ids, statuses, workspace, now, showArchived, pinned, order, query, content, t } = input;
+      const { byId, ids, statuses, workspace, now, showArchived, hideAgents, pinned, order, query, content, t } = input;
       const rows = byId && typeof byId === 'object' ? byId : EMPTY;
       const idList = Array.isArray(ids) && ids.length ? ids : Object.keys(rows);
       const archived = new Set(Array.isArray(workspace.archivedSessionIds) ? workspace.archivedSessionIds : []);
@@ -302,11 +321,19 @@ window.__ModuleLoader__.load({
       }
 
       let chatCount = 0;
+      let hiddenAgentCount = 0;
       for (const sessionId of idList) {
         const row = rows[sessionId];
         if (!row || row.blank === true) continue;
         const isArchived = archived.has(sessionId);
         if (isArchived && !showArchived) continue;
+        // Subagent Sessions carry `origin: 'subagent'`, the durable navigation flag
+        // the Host projects for exactly this purpose: a subagent run is not a chat
+        // the user opened, so auto-organize keeps it off the board.
+        if (hideAgents && row.origin === 'subagent') {
+          hiddenAgentCount += 1;
+          continue;
+        }
 
         const item = owner.get(sessionId) || byPath.get(String((row && row.cwd) || '').toLowerCase());
         const key = item ? String(item.workspaceId || item.path || 'ungrouped') : 'ungrouped';
@@ -368,7 +395,7 @@ window.__ModuleLoader__.load({
 
       for (const id of Object.keys(columns)) columns[id].sort(byProject);
 
-      return { columns, chatCount, projectCount, searching: needle.length > 0 };
+      return { columns, chatCount, projectCount, searching: needle.length > 0, hiddenAgentCount };
     }
 
     const CSS = [
@@ -402,6 +429,8 @@ window.__ModuleLoader__.load({
       '.dshboard-btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}',
       '.dshboard-btn svg{color:var(--dsw-alias-label-secondary)}',
       '.dshboard-btn[data-accent="true"] svg{color:var(--dsw-alias-brand-primary)}',
+      '.dshboard-btn[data-on="true"]{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-brand-primary)}',
+      '.dshboard-btn[data-on="true"] svg{color:var(--dsw-alias-brand-primary)}',
       '.dshboard-search{display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);min-width:220px}',
       '.dshboard-search input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px}',
       '.dshboard-search input::placeholder{color:var(--dsw-alias-label-secondary)}',
@@ -517,6 +546,20 @@ window.__ModuleLoader__.load({
         { width: 15, height: 15, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true, focusable: false },
         h('path', { d: 'M2.5 5.5h7M2.5 10.5h7', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }),
         h('path', { d: 'M12 5.5h1.5M12 10.5h1.5', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }),
+      );
+    }
+
+    /** Funnel: the board keeps its attention by filtering out agent runs. */
+    function IconOrganize() {
+      return h(
+        'svg',
+        { width: 15, height: 15, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true, focusable: false },
+        h('path', {
+          d: 'M2.5 3.8h11l-4 4.7v3.9l-3-1.6V8.5l-4-4.7Z',
+          stroke: 'currentColor',
+          strokeWidth: 1.3,
+          strokeLinejoin: 'round',
+        }),
       );
     }
 
@@ -766,6 +809,7 @@ window.__ModuleLoader__.load({
       const [notice, setNotice] = React.useState(null);
       const [flash, setFlash] = React.useState(null);
       const [compact, setCompact] = React.useState(() => readFlag(COMPACT_KEY));
+      const [hideAgents, setHideAgents] = React.useState(() => readFlagDefault(HIDE_AGENT_KEY, true));
       const [columnOrder, setColumnOrder] = React.useState(() => {
         const ids = COLUMNS.map((column) => column.id);
         const stored = readJson(COLUMN_ORDER_KEY, []).filter((id) => ids.includes(id));
@@ -875,13 +919,14 @@ window.__ModuleLoader__.load({
             workspace,
             now,
             showArchived,
+            hideAgents,
             pinned,
             order,
             query,
             content,
             t,
           }),
-        [byId, ids, statuses, workspace, now, showArchived, pinned, order, query, content, t],
+        [byId, ids, statuses, workspace, now, showArchived, hideAgents, pinned, order, query, content, t],
       );
 
       const togglePin = React.useCallback((key) => {
@@ -1188,6 +1233,25 @@ window.__ModuleLoader__.load({
           },
           h(IconCompact),
         ),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'dshboard-btn',
+            'data-on': String(hideAgents),
+            title: t('autoOrganizeHint'),
+            'aria-label': t('autoOrganize') + ': ' + t('autoOrganizeHint'),
+            'aria-pressed': String(hideAgents),
+            onClick: () =>
+              setHideAgents((value) => {
+                const next = !value;
+                writeFlag(HIDE_AGENT_KEY, next);
+                return next;
+              }),
+          },
+          h(IconOrganize),
+          t('autoOrganize'),
+        ),
         searchOpen
           ? h(
               'div',
@@ -1275,7 +1339,12 @@ window.__ModuleLoader__.load({
         'div',
         { className: 'dshboard-head' },
         h('h1', { className: 'dshboard-h1' }, t('title')),
-        h('span', { className: 'dshboard-sub' }, t('subtitle', { chats: model.chatCount, projects: model.projectCount })),
+        h(
+          'span',
+          { className: 'dshboard-sub' },
+          t('subtitle', { chats: model.chatCount, projects: model.projectCount }),
+          model.hiddenAgentCount ? ' \u00b7 ' + t('hiddenAgents', { n: model.hiddenAgentCount }) : '',
+        ),
         h('span', { className: 'dshboard-spacer' }),
         h(
           'label',

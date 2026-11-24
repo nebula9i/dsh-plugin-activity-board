@@ -24,6 +24,7 @@ Chats are grouped under their project inside each column. A project sits in the 
 - **Search** filters the board by chat title and project name, and the Host's content index adds chats matched only by message text, with the snippet shown inline.
 - **New chat** and **New project** from the board header, plus a per-project `+` to start a chat in that project.
 - **Close** with the round red button at the header's right: it returns to the Conversation with whichever chat was open before the board.
+- **Auto-organize** hides chats created by agents and subagents, which keeps the columns about work you opened. The header button toggles it, and the subtitle reports how many chats it is holding back.
 - **Right-click a card** for the same session menu the sidebar uses: pin, rename, fork, copy ID, archive, open in app.
 - **Activity badge** on the entry button: green when chats finished unseen, yellow when one is waiting on you. It hides while you're on the board.
 - **Command Code quota** in the header when that provider is installed: per-window ring, spend against cap, and when each window resets.
@@ -46,6 +47,7 @@ The sidebar panel row gains an **Activity board** entry once the plugin activate
 
 - Timestamps render in the browser's locale and time zone.
 - Pinned projects are stored per machine in the browser, not in the session log.
+- Auto-organize starts enabled and, like the other board toggles, its choice is stored per machine in the browser.
 - The Done column is derived from the last activity time, so a chat you revisit returns to Done rather than Standby.
 - The chat name itself is not clickable; switching chats is done from the dropdown beside it.
 - On macOS the board header starts past the window buttons (close/minimize/zoom), which the hidden title bar draws inside the content area; the same clearance applies to the entry button in a chat header while the sidebar is collapsed.
